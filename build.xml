@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="jar" name="auto_payoff" basedir=".">
+	<property name="lib.home" value="lib" />
+	<property name="src.home" value="src" />
+	<property name="src.ext" value="ccp" />
+	<property name="src.tests" value="test" />
+	<property name="classes.home" value="bin" />
+	<property name="dist.home" value="dist" />
+	<property name="version" value="1.0.0" />
+	<property name="zip.file.name" value="mx_japn_server" />
+	<property name="ewhine_pkg" value="ewhine_pkg" />
+	<property name="jruby.jar" value="jruby-complete-1.7.26.jar" />
+
+
+	<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		base.classpath 设置编译的java的类
+		~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	-->
+	<path id="base.classpath">
+		<fileset dir="${lib.home}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	<path id="build.classpath">
+		<fileset dir="${classes.home}">
+			<include name="**/*.class" />
+		</fileset>
+	</path>
+
+
+	<!-- 初始化的具体的目录信息 -->
+	<target name="init" description="初始化代码">
+		<mkdir dir="${classes.home}" />
+		<mkdir dir="${dist.home}" />
+	</target>
+
+	<target name="clean" description="清除目录">
+		<delete dir="${classes.home}" failonerror="false" />
+		<delete file="${ant.project.name}-${version}.jar" />
+	</target>
+
+
+
+	<target name="all" description="整体的操作" depends="clean,init,javac,jar">
+	</target>
+
+
+	<target name="javac" description="javac 编译java程序">
+		<copy todir="${classes.home}" overwrite="true" flatten="false">
+
+			<fileset dir="${src.home}">
+				<!-- include name="META-INF\service.xml" /-->
+				<include name="**/*.pem" />
+				<include name="**/*.html" />
+			</fileset>
+		</copy>
+
+		<javac srcdir="${src.home}" destdir="${classes.home}" deprecation="on" debug="true" encoding="UTF-8" includeantruntime="false" source="1.8" target="1.8">
+			<classpath refid="base.classpath" />
+			<classpath refid="build.classpath" />
+		</javac>
+	</target>
+
+	<target name="jar" description="创建jar的文件" depends="clean,init,javac">
+		<jar basedir="${classes.home}" jarfile="${ant.project.name}-${version}.jar">
+			<manifest>
+				<attribute name="Built-By" value="minxing" />
+				<attribute name="Manifest-Version" value="1.2" />
+				<attribute name="Created-By" value="minxing" />
+				<attribute name="Build-Version" value="${buildVersion}" />
+			</manifest>
+		</jar>
+
+	</target>
+
+
+	<target name="version">
+		<tstamp>
+			<format property="current.time" pattern="yyyy-MM-dd HH:mm:ss" />
+		</tstamp>
+		<echo file="version.txt" append="false">Version : ${buildVersion}
+			Date :${current.time}
+		</echo>
+	</target>
+
+	<target name="onejar" description="make one big jar" depends="jar">
+		<move todir="lib" overwrite="true" flatten="false">
+			<fileset dir="./">
+				<include name="${ant.project.name}-${version}.jar" />
+			</fileset>
+		</move>
+		<jar destfile="${ant.project.name}.jar">
+
+			<zipgroupfileset dir="${lib.home}" includes="*.jar" excludes="hamcrest*.jar junit*.jar spectrum*.jar" />
+			<fileset dir="${src.home}">
+				<include name="**\*.xml" />
+				<include name="**\*.vm" />
+				<include name="**\*.html" />
+			</fileset>
+			<manifest>
+				<attribute name="Built-By" value="minxing" />
+				<attribute name="Manifest-Version" value="1.2" />
+				<attribute name="Created-By" value="minxing" />
+				<attribute name="Build-Version" value="${buildVersion}" />
+				<attribute name="Main-Class" value="ewhine.service.Main" />
+			</manifest>
+			<!-- <zipgroupfileset dir="." includes="server.jar" /> -->
+		</jar>
+
+		<delete file="lib/${ant.project.name}-${version}.jar" />
+
+	</target>
+
+	<target name="deploy" description="deploy jar" depends="onejar">
+
+		<copy todir="/home/op/deploy/${ant.project.name}" overwrite="true" flatten="false">
+
+			<fileset dir=".">
+				<include name="${ant.project.name}.jar" />
+			</fileset>
+		</copy>
+	</target>
+
+
+
+	<target name="rake:db:create" description="exec rake file">
+		<java jar="lib/${jruby.jar}" fork="true" failonerror="true" maxmemory="128m">
+			<arg value="install.rb force" />
+		</java>
+	</target>
+
+	<target name="b" description="exec bundle install">
+		<jar destfile="gems.jar">
+			<fileset dir="${src.home}" />
+		</jar>
+	</target>
+
+	<target name="bundle:install" description="exec bundle install">
+		<java jar="${jruby.jar}" fork="true" failonerror="true" maxmemory="512M">
+			<env key="GEM_PATH" value="jruby/1.9" />
+			<arg value="-S" />
+			<arg value="gem" />
+			<arg value="install" />
+			<arg value="bundler" />
+			<arg value="--no-rdoc" />
+			<arg value="--no-ri" />
+			<arg value="--source" />
+			<arg value="http://gems.ruby-china.org" />
+			<arg value="-i" />
+			<arg value="jruby/1.9" />
+		</java>
+
+
+		<java jar="${jruby.jar}" fork="true" failonerror="true" maxmemory="512m">
+			<env key="GEM_PATH" value="jruby/1.9" />
+			<arg value="-S" />
+			<arg value="jruby/1.9/bin/bundle" />
+			<arg value="install" />
+			<arg value="--path=." />
+		</java>
+
+	</target>
+
+	<target name="rake:db:migrate" description="exec rake file">
+		<java jar="${jruby.jar}" fork="true" failonerror="true" maxmemory="512m">
+			<env key="GEM_PATH" value="jar:file:jruby-complete-1.7.26.jar!" />
+			<arg value="-S" />
+			<arg value="rake" />
+			<arg value="db:migrate" />
+		</java>
+	</target>
+	<target name="test" depends="onejar" description="exec the test task">
+		<classpath refid="base.classpath" />
+		<classpath refid="build.classpath" />
+		<classpath>
+			<pathelement location="${build.tests}" />
+			<pathelement path="${java.class.path}" />
+		</classpath>
+		<formatter type="plain" />
+
+		<junit fork="yes">
+			<batchtest fork="yes">
+				<fileset dir="${src.tests}">
+					<include name="**/Test*.java" />
+
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
+</project>
+
