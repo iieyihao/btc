@@ -31,4 +31,4 @@ payoff_logs/
 initial_prices_logs/
 payoff_detail_logs/
 *.pyc
-!lib/
+!lib/*.jar
