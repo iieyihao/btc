@@ -2,7 +2,7 @@ package ewhine.tools;
 
 import com.dehuinet.activerecord.Session;
 import com.dehuinet.activerecord.StoreManager;
-import ewhine.models.BtcMarket;
+import ewhine.models.BtcBaseMarket;
 import ewhine.service.ConfigService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ public class ExportCsv extends Thread {
 
 		for (String name : nameList) {
 			try {
-				final String outFile = "/Users/mysql/" + name + "_" + BtcMarket.type2String.get(type) + ".csv";
+				final String outFile = "/Users/mysql/" + name + "_" + BtcBaseMarket.typeTime2String.get(type) + ".csv";
 				File file = new File(outFile);
 				if (file.exists()) {
 					if (file.length() == 0) {
@@ -48,7 +48,7 @@ public class ExportCsv extends Thread {
 				session.executeQuery(sql, new ArrayList<>(), (x) -> {return null;});
 				LOG.info("file:" + outFile + " ok");
 			} catch (Throwable t) {
-				LOG.error("name:" + name + " type:" + BtcMarket.type2String.get(type), t);
+				LOG.error("name:" + name + " type:" + BtcBaseMarket.typeTime2String.get(type), t);
 			}
 
 		}
@@ -69,24 +69,46 @@ public class ExportCsv extends Thread {
 		ConfigService config_service = new ConfigService();
 		config_service.start();
 
-		Session session = StoreManager.openSession();
-		List<String> nameList = new ArrayList<>();
-		session.executeQuery("select DISTINCT name from btc_market;", new ArrayList<>(), (rs) -> {
-			while (rs.next()) {
-				nameList.add(rs.getString(1));
-			}
-			return null;
-		});
+//		Session session = StoreManager.openSession();
+//		List<String> nameList = new ArrayList<>();
+//		session.executeQuery("select DISTINCT name from btc_market;", new ArrayList<>(), (rs) -> {
+//			while (rs.next()) {
+//				nameList.add(rs.getString(1));
+//			}
+//			return null;
+//		});
+//
+//		final List<String> nameLeftList = nameList.subList(0, nameList.size()/2);
+//		final List<String> nameRightList = nameList.subList(nameList.size()/2, nameList.size());
+//		if (nameLeftList.size() + nameRightList.size() != nameList.size()) {
+//			throw new Exception("fatal error");
+//		}
+//		for (int type = 0; type<= BtcBaseMarket.TYPE_1MINUTE; type++) {
+//			new ExportCsv(nameLeftList, type).start();
+//			new ExportCsv(nameRightList, type).start();
+//		}
 
-		final List<String> nameLeftList = nameList.subList(0, nameList.size()/2);
-		final List<String> nameRightList = nameList.subList(nameList.size()/2, nameList.size());
-		if (nameLeftList.size() + nameRightList.size() != nameList.size()) {
-			throw new Exception("fatal error");
+		Session session = StoreManager.openSession();
+		String[] tables = {"btc_open_market","btc_close_market","btc_high_market","btc_low_market","btc_volume_market"};
+
+		for (String table : tables) {
+			List<String> nameList = new ArrayList<>();
+			session.executeQuery("select COLUMN_NAME from information_schema.columns where table_name='" + table + "';", new ArrayList<>(), (rs) -> {
+				while (rs.next()) {
+					nameList.add(rs.getString(1));
+				}
+				return null;
+			});
+			System.out.println(nameList.size());
+//			for (String colName : nameList) {
+//				if ("id".equals(colName) || "time".equals(colName) || "type".equals(colName)) {
+//					continue;
+//				}
+//				String sql = "alter table " + table + " modify column " + colName + " BLOB;";
+//				session.executeUpdate(sql, new ArrayList<>());
+//			}
 		}
-		for (int type=0;type<=BtcMarket.TYPE_1MINUTE;type++) {
-			new ExportCsv(nameLeftList, type).start();
-			new ExportCsv(nameRightList, type).start();
-		}
+
 
 //		session.executeQuery("select * into outfile '/Users/mysql/t.csv' from btc_market limit 1", new ArrayList<>(), (x) -> {return null;});
 

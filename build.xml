@@ -176,7 +176,7 @@
 			<pathelement location="${build.tests}" />
 			<pathelement path="${java.class.path}" />
 		</classpath>
-		<formatter type="plain" />
+		<formatter type_time="plain" />
 
 		<junit fork="yes">
 			<batchtest fork="yes">
