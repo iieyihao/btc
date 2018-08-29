@@ -184,7 +184,7 @@ public class FileArrayProcessor extends Thread {
 	public static void main(String[] args) {
 		TimeZone timeZone = TimeZone.getTimeZone("Asia/Shanghai");
 		TimeZone.setDefault(timeZone);
-//		new FileArrayProcessor("btc_files/").start();
+//new FileArrayProcessor("btc_files/").start();
 //		if (new FileArrayProcessor("xx").isColumnExist("btc_open_market", "time")) {
 //			System.out.println("no");
 //		} else {

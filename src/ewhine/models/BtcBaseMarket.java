@@ -7,7 +7,7 @@ import com.dehuinet.activerecord.annotation.Column;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
+import java.io.*;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -90,12 +90,38 @@ public class BtcBaseMarket extends Base implements Serializable {
 				'}';
 	}
 
-	public static void main(String[] args) {
-		BtcBaseMarket market = Model.of(BtcBaseMarket.class)
-								.where("id > 0").last();
-		System.out.println(market);
+	public static void main(String[] args) throws IOException{
+//		BtcBaseMarket market = Model.of(BtcBaseMarket.class)
+//								.where("id > 0").last();
+//		System.out.println(market);
+//
+//		Model.of(BtcBaseMarket.class)
+//				.where("ADABTC = 1");
+		File file = new File("test/calender.csv");
+		BufferedReader reader = new BufferedReader(new FileReader(file));
+		String line = null;
+		while ((line=reader.readLine()) != null) {
+			String[] items = line.split(",");
+			//close_days.add(toIntDate(2018, 12, 30));
+			if (items.length == 2 && items[1].equals("False")) {
+				String[] data = items[0].split("-");
+				if (data.length==3) {
+					String year = data[0];
+					String month = data[1];
+					if (month.startsWith("0")) {
+						month = month.replace("0", "");
+					}
+					String day = data[2];
+					if (day.startsWith("0")) {
+						day = day.replace("0", "");
+					}
 
-		Model.of(BtcBaseMarket.class)
-				.where("ADABTC = 1");
+					System.out.println("close_days.add(toIntDate(" + year + ", " + month + ", " + day
+										+ "));");
+				}
+			}
+		}
+
+
 	}
 }

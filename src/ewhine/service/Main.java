@@ -11,7 +11,7 @@ import java.util.TimeZone;
 
 public class Main {
 
-	public static String BASE_DIR = "/Users/liuyihao/WorkSpace/xiaoqiwang/my_master/btc/t/";
+	public static String BASE_DIR = "/Users/liuyihao/WorkSpace/xiaoqiwang/my_master/t/";
 
 	public static void main(String[] args) {
 		// 启动顺序
@@ -27,7 +27,7 @@ public class Main {
 //			new FileArrayProcessor(dir).start();
 //			System.out.println("start processing " + i);
 //		}
-		List<List<String>> fList = getFileList(20);
+		List<List<String>> fList = getFileList(10);
 		for (int i = 0; i < fList.size(); i++) {
 			new FileArrayProcessor(fList.get(i)).start();
 		}
@@ -40,7 +40,7 @@ public class Main {
 		}
 	}
 
-	private static List<List<String>> getFileList(int targ) {
+	private static List<List<String>> getFileList(int numThreads) {
 		List<List<String>>mEndList=new ArrayList<>();
 
 		File dirFile = new File(BASE_DIR);
@@ -54,6 +54,8 @@ public class Main {
 		}
 
 		List<String> flist = Arrays.asList(dirFile.list());
+		int targ = flist.size() / numThreads;
+		System.out.println("files:" + flist.size() + " number of Thread:" + numThreads + " number of perthread:" + targ);
 
 		if( flist.size()%targ!=0) {
 			for (int j = 0; j < flist.size() / targ + 1; j++) {
